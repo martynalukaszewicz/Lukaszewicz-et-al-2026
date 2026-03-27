@@ -23,7 +23,7 @@ Processed pipeline outputs underlying all analyses — including contig-to-bin a
 
 > **DOI:** [to be added upon publication]
 
-Raw sequencing files (Hi-C and shotgun FASTQ reads) and the MEGAHIT shotgun assembly are no longer available, as these libraries were prepared and sequenced in 2020–2021 and files were not retained through subsequent storage transitions. The wastewater sample used in this study is the same sample described in Stalder et al. 2019 (ISME J, BioProject PRJNA506462); the shotgun and Hi-C libraries used here were independently prepared from the same frozen sample material following the same protocol, and represent separate sequencing runs from those deposited under PRJNA506462.
+Raw sequencing files (Hi-C and shotgun FASTQ reads) and the MEGAHIT shotgun assembly are no longer available, as these libraries were prepared and sequenced in 2020–2021 and files were not retained through subsequent storage transitions. The wastewater sample used in this study was collected from the same Moscow WWTP described in Stalder et al. 2019 (ISME J, BioProject PRJNA506462), but represents an independent sample collected on 15 November 2018 from the outflow of the facility. The shotgun and Hi-C libraries generated for the present study are separate sequencing runs not deposited under PRJNA506462.
 
 ---
 
@@ -88,7 +88,7 @@ Helper function `saveNNsummary()`. Removes NAs from summary files and saves clea
 Defines `make_summary_table_extended()` and `validate_vs_table1()`. Generates the extended summary table (Table 1 in the manuscript) across all five replicates and three pipelines, in HTML, LaTeX, or data frame format. Must be sourced before `metadata_clustering_completeness_contamination_manuscript.R`.
 
 **`metadata_clustering_completeness_contamination_manuscript.R`**  
-Generates completeness/contamination and genome size scatter plots (Figure 2 in the manuscript) for all five Hi-C library replicates. Also calls `validate_vs_table1()` and `make_summary_table_extended()` to produce Table 1.
+Generates completeness/contamination and genome size scatter plots for all five Hi-C library replicates. Also calls `validate_vs_table1()` and `make_summary_table_extended()` to produce Table 1.
 
 - Sources: `getdata2_DistancebyLength.R`, `make_summary_table_extended.R`
 - Input: `Similarity_Routput/[pipeline]/metadata.tsv`
