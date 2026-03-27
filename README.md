@@ -21,7 +21,7 @@ The study evaluates the reproducibility of Hi-C-based metagenomic binning pipeli
 
 Processed pipeline outputs underlying all analyses — including contig-to-bin assignment tables, per-bin CheckM quality metrics, pairwise Jaccard dissimilarity matrices, and summary statistics — are deposited at Zenodo:
 
-> **DOI:** [to be added upon publication]
+> **DOI:** [10.5281/zenodo.19260186](https://doi.org/10.5281/zenodo.19260186)
 
 Raw sequencing files (Hi-C and shotgun FASTQ reads) and the MEGAHIT shotgun assembly are no longer available, as these libraries were prepared and sequenced in 2020–2021 and files were not retained through subsequent storage transitions. The wastewater sample used in this study was collected from the same Moscow WWTP described in Stalder et al. 2019 (ISME J, BioProject PRJNA506462), but represents an independent sample collected on 15 November 2018 from the outflow of the facility. The shotgun and Hi-C libraries generated for the present study are separate sequencing runs not deposited under PRJNA506462.
 
