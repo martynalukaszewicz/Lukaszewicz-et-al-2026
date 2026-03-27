@@ -95,7 +95,7 @@ Generates completeness/contamination and genome size scatter plots (Figure 2 in 
 - Output: PNG plots per replicate
 
 **`plot_MedianDissimilarity_figures_perbinningpipeline.R`**  
-Generates median nearest-neighbour dissimilarity line plots per binning pipeline across completeness thresholds (Figures 3 and S1 in the manuscript). Can be run standalone or sourced from `DistancebyLength.R`.
+Generates median nearest-neighbour dissimilarity line plots per binning pipeline across completeness thresholds. Can be run standalone or sourced from `DistancebyLength.R`.
 
 - Input: `NN_[Software]_summary.tsv` files from `DistancebyLength/[Software]/`
 - Output: `fig_main_6pairs_perbinningpipeline.png`, `fig_qc_abc_6pairs_perbinningpipeline.png`, `fig_all20_pairs_perbinningpipeline.png`, `fig_no_abc_14pairs_perbinningpipeline.png`
