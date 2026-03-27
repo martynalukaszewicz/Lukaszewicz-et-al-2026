@@ -114,6 +114,8 @@ Generates median nearest-neighbour dissimilarity line plots per Hi-C library rep
 
 Set paths in `prepare_data_for_similarity_analysis.R` and run it to generate `data.tsv` and `metadata.tsv` per pipeline. If starting from the Zenodo deposit, this step is already done — download the processed files directly.
 
+Optionally, run `summarize_hic_metadata.R` using the `data.tsv` and `metadata.tsv` files as input to produce comprehensive summary tables at both the bin level and the contig level, including per-bin contig statistics, cross-pipeline comparisons, and contig length stratification by completeness.
+
 ### Step 2 — Calculate dissimilarities
 
 Set `dir_Similarity_Routput` and `dir_out` in `DistancebyLength.R`. Run twice:
