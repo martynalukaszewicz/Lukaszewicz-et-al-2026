@@ -34,6 +34,10 @@
 ##     - contig_list: one row per contig in passing bins
 ##   Combined cross-pipeline summary tables:
 ##     - cross_pipeline_bin_summary_allreps.tsv  (all 5 replicates)
+##     - cross_pipeline_completeness_threshold_summary.tsv
+##         (includes mean_cont and median_cont)
+##     - cross_pipeline_threshold_range_summary.tsv
+##         (min-max ranges + per-replicate value lists for each metric)
 ##
 ## USAGE:
 ##   Edit the FILE PATHS section below, then:
@@ -253,8 +257,8 @@ cat("\nMerging data with metadata (inner join on cluster_id + replicate)...\n")
 pm_merged <- inner_join(
   pm_data_raw,
   pm_meta %>% dplyr::select(cluster_id, replicate, Completeness, Contamination,
-                             GenomeSize, N50_meta, NumContigs_meta, MeanContigLen_meta,
-                             GC, Lineage, MashRef),
+                            GenomeSize, N50_meta, NumContigs_meta, MeanContigLen_meta,
+                            GC, Lineage, MashRef),
   by = c("cluster_id", "replicate")
 )
 cat(sprintf("ProxiMeta merged: %d contigs in %d passing bins\n",
@@ -263,7 +267,7 @@ cat(sprintf("ProxiMeta merged: %d contigs in %d passing bins\n",
 b3_merged <- inner_join(
   b3_data_raw,
   b3_meta %>% dplyr::select(cluster_id, replicate, Completeness, Contamination,
-                             GenomeSize, N50_meta, NumContigs_meta, MeanContigLen_meta, GC),
+                            GenomeSize, N50_meta, NumContigs_meta, MeanContigLen_meta, GC),
   by = c("cluster_id", "replicate")
 )
 cat(sprintf("Bin3C merged:     %d contigs in %d passing bins\n",
@@ -272,8 +276,8 @@ cat(sprintf("Bin3C merged:     %d contigs in %d passing bins\n",
 mt_merged <- inner_join(
   mt_data_raw,
   mt_meta %>% dplyr::select(cluster_id, replicate, Completeness, Contamination,
-                             GenomeSize, N50_meta, NumContigs_meta, LongestContig_meta,
-                             GC, CodingDensity, HiCCoverage, taxonomy),
+                            GenomeSize, N50_meta, NumContigs_meta, LongestContig_meta,
+                            GC, CodingDensity, HiCCoverage, taxonomy),
   by = c("cluster_id", "replicate")
 )
 cat(sprintf("MetaTOR merged:   %d contigs in %d passing bins\n",
@@ -390,16 +394,16 @@ for (pipeline in c("ProxiMeta", "Bin3C", "MetaTOR")) {
                "Bin3C"     = b3_bin_full,
                "MetaTOR"   = if (nrow(mt_bin_full) > 0) mt_bin_full else NULL)
   if (is.null(df) || nrow(df) == 0) { cat(sprintf("\n%s: no data available\n", pipeline)); next }
-
+  
   cat(sprintf("\n%s\n%s\n", pipeline, strrep("-", nchar(pipeline))))
-
+  
   for (rep in ALL_REPS) {
     d <- df %>% filter(replicate == rep)
     if (nrow(d) == 0) next
     cat(sprintf("\n  --- %s: %d bins ---\n", rep, nrow(d)))
     cat("  Completeness thresholds:\n")
     print(comp_counts(d$Completeness, nrow(d)), n = Inf)
-
+    
     num_tbl <- bind_rows(
       sumstats(d$Completeness,           "Completeness (%)"),
       sumstats(d$Contamination,          "Contamination (%)"),
@@ -419,7 +423,7 @@ for (pipeline in c("ProxiMeta", "Bin3C", "MetaTOR")) {
     )
     cat("\n  Numeric summary:\n")
     print(num_tbl, n = Inf)
-
+    
     if (pipeline == "MetaTOR" && "Phylum" %in% names(d)) {
       cat("\n  Phylum-level taxonomy:\n")
       print(as.data.frame(sort(table(d$Phylum), decreasing = TRUE)), row.names = FALSE)
@@ -440,7 +444,7 @@ for (pipeline in c("ProxiMeta", "Bin3C", "MetaTOR")) {
                "Bin3C"     = b3_bin_full,
                "MetaTOR"   = if (nrow(mt_bin_full) > 0) mt_bin_full else NULL)
   if (is.null(df) || nrow(df) == 0) next
-
+  
   d <- df %>%
     filter(replicate %in% MAIN_REPS) %>%
     mutate(CompStrata = case_when(
@@ -452,7 +456,7 @@ for (pipeline in c("ProxiMeta", "Bin3C", "MetaTOR")) {
     )) %>%
     mutate(CompStrata = factor(CompStrata,
                                levels = c("<50%","50-85%","85-90%","90-95%",">=95%")))
-
+  
   strata_summary <- d %>%
     group_by(CompStrata) %>%
     summarise(
@@ -465,7 +469,7 @@ for (pipeline in c("ProxiMeta", "Bin3C", "MetaTOR")) {
       Median_contigs    = round(median(N_contigs_data,  na.rm=TRUE), 0),
       .groups = "drop"
     )
-
+  
   cat(sprintf("\n%s (main replicates combined):\n", pipeline))
   print(strata_summary, n = Inf)
 }
@@ -540,4 +544,112 @@ cross_all <- bind_rows(
 write_tsv(cross_all, file.path(OUT_DIR, "cross_pipeline_bin_summary_allreps.tsv"))
 cat("Saved: cross_pipeline_bin_summary_allreps.tsv\n")
 
+## ── Completeness-threshold summary table ─────────────────────────────
+## For each Software x replicate x completeness threshold (>=0, >=20,
+## >=40, >=60, >=80): n_bins, mean/median completeness, contamination,
+## genome size, per-bin N50, and contigs-per-bin.
+
+comp_thresh_summary <- bind_rows(
+  lapply(c(0, 20, 40, 60, 80), function(thr) {
+    cross_all %>%
+      filter(Completeness >= thr) %>%
+      group_by(Software, replicate) %>%
+      summarise(
+        Completeness_threshold  = thr,
+        n_bins                  = n(),
+        mean_comp               = round(mean(Completeness,    na.rm = TRUE), 2),
+        median_comp             = round(median(Completeness,  na.rm = TRUE), 2),
+        mean_cont               = round(mean(Contamination,   na.rm = TRUE), 2),
+        median_cont             = round(median(Contamination, na.rm = TRUE), 2),
+        mean_gs                 = round(mean(GenomeSize,      na.rm = TRUE), 0),
+        median_gs               = round(median(GenomeSize,    na.rm = TRUE), 0),
+        mean_binN50             = round(mean(N50_computed_bp,   na.rm = TRUE), 0),
+        median_binN50           = round(median(N50_computed_bp, na.rm = TRUE), 0),
+        mean_contigsperbin      = round(mean(N_contigs_data,    na.rm = TRUE), 2),
+        median_contigsperbin    = round(median(N_contigs_data,  na.rm = TRUE), 0),
+        .groups = "drop"
+      )
+  })
+) %>%
+  arrange(Software, replicate, Completeness_threshold)
+
+write_tsv(comp_thresh_summary,
+          file.path(OUT_DIR, "cross_pipeline_completeness_threshold_summary.tsv"))
+cat("Saved: cross_pipeline_completeness_threshold_summary.tsv\n")
+
+## ── Per-group range summary table ────────────────────────────────────
+## Min-max ranges across replicates within Main (1,2,3A) and
+## QC (3A,3B,3C) groups, for each Software x Completeness_threshold.
+## Each metric also has a _list column with the per-replicate values
+## in replicate order (e.g. "0.81,0.79,0.84") for traceability.
+## CHANGE: added _list columns alongside each min/max pair.
+
+make_range_summary <- function(df, grp_reps, grp_label) {
+  df %>%
+    filter(replicate %in% grp_reps) %>%
+    arrange(replicate) %>%                          # consistent order within group
+    group_by(Software, Completeness_threshold) %>%
+    summarise(
+      Group                = grp_label,
+      n_reps               = n(),
+      replicates_list      = paste(replicate, collapse = ","),
+      
+      n_bins_min           = min(n_bins),
+      n_bins_max           = max(n_bins),
+      n_bins_list          = paste(n_bins, collapse = ","),
+      
+      mean_comp_min        = min(mean_comp),
+      mean_comp_max        = max(mean_comp),
+      mean_comp_list       = paste(mean_comp, collapse = ","),
+      
+      median_comp_min      = min(median_comp),
+      median_comp_max      = max(median_comp),
+      median_comp_list     = paste(median_comp, collapse = ","),
+      
+      mean_cont_min        = min(mean_cont),
+      mean_cont_max        = max(mean_cont),
+      mean_cont_list       = paste(mean_cont, collapse = ","),
+      
+      median_cont_min      = min(median_cont),
+      median_cont_max      = max(median_cont),
+      median_cont_list     = paste(median_cont, collapse = ","),
+      
+      median_gs_min        = round(min(median_gs)/1e6, 3),
+      median_gs_max        = round(max(median_gs)/1e6, 3),
+      median_gs_list       = paste(round(median_gs/1e6, 3), collapse = ","),
+      
+      mean_N50_min         = round(min(mean_binN50)/1e3, 1),
+      mean_N50_max         = round(max(mean_binN50)/1e3, 1),
+      mean_N50_list        = paste(round(mean_binN50/1e3, 1), collapse = ","),
+      
+      median_N50_min       = round(min(median_binN50)/1e3, 1),
+      median_N50_max       = round(max(median_binN50)/1e3, 1),
+      median_N50_list      = paste(round(median_binN50/1e3, 1), collapse = ","),
+      
+      mean_ctg_min         = min(mean_contigsperbin),
+      mean_ctg_max         = max(mean_contigsperbin),
+      mean_ctg_list        = paste(mean_contigsperbin, collapse = ","),
+      
+      median_ctg_min       = min(median_contigsperbin),
+      median_ctg_max       = max(median_contigsperbin),
+      median_ctg_list      = paste(median_contigsperbin, collapse = ","),
+      
+      .groups = "drop"
+    )
+}
+
+main_reps_vec <- c("E_15_1", "E_15_2", "E_15_3A")
+qc_reps_vec   <- c("E_15_3A", "E_15_3B", "E_15_3C")
+
+range_summary <- bind_rows(
+  make_range_summary(comp_thresh_summary, main_reps_vec, "Main_1_2_3A"),
+  make_range_summary(comp_thresh_summary, qc_reps_vec,   "QC_3A_3B_3C")
+) %>%
+  arrange(Software, Completeness_threshold, Group)
+
+write_tsv(range_summary,
+          file.path(OUT_DIR, "cross_pipeline_threshold_range_summary.tsv"))
+cat("Saved: cross_pipeline_threshold_range_summary.tsv\n")
+
 cat("\nDone.\n")
+
