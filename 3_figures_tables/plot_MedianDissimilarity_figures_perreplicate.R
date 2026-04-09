@@ -9,7 +9,7 @@
 ##   source(file.path(dir_out, "plot_MedianDissimilarity_figures_perreplicate.R"))
 ##
 ## REQUIRES (must exist in environment before sourcing):
-##   dir_out  — output directory path (string)
+##   dir_out <- "~/path/to/2_distance_calculations/"
 ##
 ## OUTPUTS (saved to dir_out):
 ##   fig_main_3panels_perhic.png    — Replicate 1, Replicate 2, Replicate 3A
@@ -144,7 +144,7 @@ make_rep_panel <- function(data_s, rep_name, border_col,
                        name   = "Metagenomic Binning\nPipeline Pair") +
     scale_x_continuous(breaks = seq(0, 100, by = 5),
                        limits = c(0, 100)) +
-    scale_y_continuous(breaks = seq(0, 1, by = 0.025),
+    scale_y_continuous(breaks = seq(0, 1, by = 0.05),
                        limits = c(0, y_max)) +
     xlab(expression("(%) Completeness" >= "")) +
     ylab("Median dissimilarity of NN pairs") +
