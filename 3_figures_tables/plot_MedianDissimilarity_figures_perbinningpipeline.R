@@ -1,21 +1,14 @@
-#######################################################################
+########################################################################
 ## plot_MedianDissimilarity_figures_perbinningpipeline.R
 ##
 ## Generates four figures of median dissimilarity of NN pairs across
 ## completeness levels, one panel per software (ProxiMeta, Bin3C, MetaTOR).
 ##
-## CAN BE RUN IN TWO WAYS:
+## HOW TO SOURCE FROM YOUR MAIN SCRIPT:
+##   source(file.path(dir_out, "plot_MedianDissimilarity_figures_perbinningpipeline.R"))
 ##
-##   (A) STANDALONE — run this script directly.
-##       Set dir_out below, then run the whole script.
-##       It reads NN_[Software]_summary.tsv files from dir_out itself.
-##
-##   (B) SOURCED from DistancebyLength.R — the all_software_r_data_summary
-##       object is already in the environment and dir_out is already set,
-##       so the data-reading block below is skipped automatically.
-##
-## REQUIRES (standalone mode):
-##   dir_out — path to DistancebyLength output folder (set below)
+## REQUIRES (must exist in environment before sourcing):
+##   dir_out <- "~/path/to/2_distance_calculations/"
 ##   NN_Proximeta_summary.tsv, NN_Bin3C_summary.tsv,
 ##   NN_MetaTOR_summary.tsv  — produced by DistancebyLength.R / saveNNsummary()
 ##
@@ -44,31 +37,12 @@ library(cowplot)
 ## remove cowplot grey background from the plot_grid canvas
 theme_set(theme_cowplot(font_size = 10))
 
-
-# -----------------------------------------------------------------------
-# USER PARAMETER (standalone mode only)
-# Set this path if running the script directly rather than sourcing it
-# from DistancebyLength.R. When sourced, dir_out is already set.
-# -----------------------------------------------------------------------
-## dir_out <- "~/path/to/DistancebyLength/"
-# -----------------------------------------------------------------------
-
-
 ## ── 0. Build all_software_r_data_summary if not already in environment ──
 ##
 ## When sourced from DistancebyLength.R, all_software_r_data_summary
 ## already exists and this block is skipped.
 ## When run standalone, this block reads the NN_[Software]_summary.tsv
 ## files produced by saveNNsummary() and assembles the object.
-
-## Check dir_out is set before proceeding
-if (!exists("dir_out")) {
-  stop("dir_out is not set.",
-       "
-Set it at the top of this script before running:",
-       "
-  dir_out <- "~/path/to/DistancebyLength/"")
-}
 
 ## rename_pairs must be defined before the data-reading block uses it
 rename_pairs <- function(x) {
@@ -94,8 +68,7 @@ if (!exists("all_software_r_data_summary")) {
 
     if (!file.exists(fname)) {
       stop("Required file not found: ", fname,
-           "
-Run DistancebyLength.R first to generate NN summary files.")
+           "\nRun DistancebyLength.R first to generate NN summary files.")
     }
 
     r_data <- read_tsv(fname, show_col_types = FALSE)
@@ -210,11 +183,28 @@ set_no_abc_14 <- rename_pairs(c(
   "E 15 2 to E 15 3C", "E 15 3C to E 15 2"
 ))
 
+## ── Y-axis settings are hardcoded per figure set ─────────────────────
+##
+##   fig_main, fig_no_abc, fig_all20 : 0 to 0.375 by 0.025
+##   fig_qc_abc                      : 0 to 0.025 by 0.00125
+
 figure_sets <- list(
-  all20    = list(pairs = set_all20,     filename = "fig_all20_pairs_perbinningpipeline"),
-  main     = list(pairs = set_main_6,    filename = "fig_main_6pairs_perbinningpipeline"),
-  qc_abc   = list(pairs = set_abc_6,     filename = "fig_qc_abc_6pairs_perbinningpipeline"),
-  no_abc   = list(pairs = set_no_abc_14, filename = "fig_no_abc_14pairs_perbinningpipeline")
+  all20  = list(pairs    = set_all20,
+                filename = "fig_all20_pairs_perbinningpipeline",
+                y_max    = 0.375,
+                y_breaks = seq(0, 0.375, by = 0.025)),
+  main   = list(pairs    = set_main_6,
+                filename = "fig_main_6pairs_perbinningpipeline",
+                y_max    = 0.375,
+                y_breaks = seq(0, 0.375, by = 0.025)),
+  qc_abc = list(pairs    = set_abc_6,
+                filename = "fig_qc_abc_6pairs_perbinningpipeline",
+                y_max    = 0.025,
+                y_breaks = seq(0, 0.025, by = 0.00125)),
+  no_abc = list(pairs    = set_no_abc_14,
+                filename = "fig_no_abc_14pairs_perbinningpipeline",
+                y_max    = 0.375,
+                y_breaks = seq(0, 0.375, by = 0.025))
 )
 
 ## ── 4. Panel-building function (y_breaks passed in) ───────────────────
@@ -271,21 +261,16 @@ for (fig_name in names(figure_sets)) {
   fig_info   <- figure_sets[[fig_name]]
   pairs_keep <- fig_info$pairs
   col_subset <- pair_colors_20[names(pair_colors_20) %in% pairs_keep]
+
+  ## y-axis settings come directly from figure_sets definition
+  y_max    <- fig_info$y_max
+  y_breaks <- fig_info$y_breaks
   
   data_fig <- all_software_r_data_summary %>%
     filter(`NN Pairs renamed` %in% pairs_keep) %>%
     mutate(`NN Pairs renamed` = factor(`NN Pairs renamed`,
                                        levels = pairs_keep))
   
-  ## shared y upper limit across all three pipelines, rounded to 0.025
-  ## minimum of 0.075 so the 0.05 reference line is always visible
-  y_max_raw <- max(data_fig$`Median Dissimilarity Value of NN Pairs`,
-                   na.rm = TRUE)
-  y_max     <- max(ceiling(y_max_raw / 0.025) * 0.025, 0.075)
-
-  ## adaptive y breaks: fine (0.025) when y_max <= 0.075, coarse (0.05) otherwise
-  y_breaks  <- if (y_max <= 0.075) seq(0, y_max, by = 0.025) else seq(0, 1, by = 0.05)
-
   ## pull contamination and genome size labels from data for the title
   cont <- unique(data_fig$`Contamination<=`)
   gs   <- unique(data_fig$GenomeSize)
@@ -323,11 +308,11 @@ for (fig_name in names(figure_sets)) {
   
   title_grob <- ggdraw() +
     draw_label(title_label,
-               fontface  = "plain",
+               fontface   = "plain",
                fontfamily = "Times New Roman",
-               size      = 12,
-               hjust     = 0.5,
-               vjust     = 0.5)
+               size       = 12,
+               hjust      = 0.5,
+               vjust      = 0.5)
   
   p_final <- plot_grid(title_grob, panels_with_legend,
                        ncol        = 1,
