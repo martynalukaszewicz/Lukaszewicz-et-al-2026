@@ -45,7 +45,7 @@
 dir_Similarity_Routput <- "~/path/to/Similarity_Routput/"
 
 # Path to this script's folder (also where helper scripts live and outputs are written)
-dir_out <- "~/path/to/DistancebyLength/"
+dir_out <- "~/path/to/2_distance_calculations/"
 
 # -----------------------------------------------------------------------
 # END USER PARAMETERS
