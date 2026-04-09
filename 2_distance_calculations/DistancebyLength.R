@@ -83,7 +83,7 @@ source(file.path(dir_out, "saveNNsummary_DistancebyLength.R"))
 
 contamination_cutoff <- 10
 genomesize_cutoff    <- c("100Kb" = 100e3, "10Mb" = 10e6)
-complete             <- c(0, 85, 90, 95)   ## completeness thresholds for simMat calculations
+complete <- seq(from = 0, to = 95, by = 5)   ## completeness thresholds for simMat calculations
 
 ## Set id_tag to control which comparison is run:
 ##   "replicate" — cross-pipeline comparisons per Hi-C library replicate
