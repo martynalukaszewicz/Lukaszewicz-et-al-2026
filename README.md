@@ -1,4 +1,4 @@
-# Hi-C precision in bacterial genomes reconstruction
+# Precision of Hi-C-based metagenome-assembled genome reconstruction across binning pipelines
 
 **Lukaszewicz et al. 2026**
 
@@ -11,7 +11,7 @@ University of Idaho
 
 This repository contains all R scripts used for data processing, dissimilarity calculations, and figure generation in:
 
-> Lukaszewicz M, Ridenhour BJ, Top EM, Stalder T. *Hi-C precision in bacterial genomes reconstruction.* (2026)
+> Lukaszewicz M, Ridenhour BJ, Top EM, Stalder T. *Precision of Hi-C-based metagenome-assembled genome reconstruction across binning pipelines.* (2026)
 
 The study evaluates the reproducibility of Hi-C-based metagenomic binning pipelines (ProxiMeta, Bin3C v0.1.1, MetaTOR v1.1.5) using three Hi-C library replicates of a wastewater effluent sample, and quantifies the precision of metagenome-assembled genome (MAG) reconstruction using Jaccard distance.
 
